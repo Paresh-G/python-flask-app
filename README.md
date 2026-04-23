@@ -7,7 +7,7 @@ This sample python flask application details are as follows:
 - **Execution flow**: src/app.py >> templates/index.html
 - **Dependencies file**: requirements.txt
 - **CSS for templates/index.html**: static/style.css
-- **App listens on port**: 8080
+- **App listens on port**: 8000
 
 ## Step-02: How to run the flask application
 
