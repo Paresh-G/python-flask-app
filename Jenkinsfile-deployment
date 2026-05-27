@@ -1,0 +1,68 @@
+# This file does not belongs to any project, you can refer and used this file only for deployemnt.
+# in this pipeline we have used 2 server 1 were minikube installed and 1 were jenkins installed.
+# minikube server ".pem" key stred in jenkins credentails and used below user for access.
+# docker registory logged in on minikube already (if not then login 1st to docker registory on minikube server) to fetch image from my private repo
+
+pipeline {
+    agent any
+    environment {
+        
+        REMOTE_USER = 'ec2-user'
+        REMOTE_HOST = '172.31.40.159'
+    }
+
+    stages {
+
+        stage('Connect Minikube') {
+            steps {
+                sshagent(credentials: ['minikube']) {
+                sh '''
+                     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                     hostname
+                     kubectl get nodes
+                     minikube status
+                     kubectl get all
+                     "
+                '''
+                }
+            }
+        }
+        
+        stage('scm checkout') {
+            steps {
+                sshagent(credentials: ['minikube']) {
+                sh '''
+                     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                     git clone https://github.com/Paresh-G/k8s-manifest.git
+                "
+                '''
+                }
+            }
+        }
+
+       stage('deploy-pod'){
+           steps{
+                sshagent(credentials: ['minikube']) {
+                sh '''
+                     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                     kubectl apply -f /home/ec2-user/k8s-manifest/deployment-template.yml
+                     sleep 10
+                     "
+                '''
+                }
+             }
+         }
+
+        stage('deployment-status') {
+            steps {
+                sshagent(credentials: ['minikube']) {
+                sh '''
+                     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} "
+                     kubectl get all
+                     "
+                '''
+                }
+            }
+        }
+    }
+}
